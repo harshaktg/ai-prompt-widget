@@ -1,4 +1,4 @@
-import { useAutomationNode } from '@atlanhq/automation-iframe-sdk/react'
+import { useAutomationWidget } from '@atlanhq/automation-iframe-sdk/widget/react'
 import type { AIPromptInputs, AIConfig } from './types'
 import PromptEditor from './components/PromptEditor'
 import ModelSelector from './components/ModelSelector'
@@ -8,7 +8,7 @@ import './App.css'
 
 function App() {
     const { inputs, onChange, isReady, theme } =
-        useAutomationNode<AIPromptInputs>()
+        useAutomationWidget<AIPromptInputs>()
 
     if (!isReady) {
         return (
@@ -94,7 +94,7 @@ function App() {
 
             <div className="footer">
                 <p className="footer-text">
-                    AI Prompt Widget - Configure prompts for the AI Prompt Activity
+                    AI Prompt Widget - Powered by @atlanhq/automation-iframe-sdk v2.0
                 </p>
             </div>
         </div>
