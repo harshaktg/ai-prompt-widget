@@ -34,8 +34,8 @@ export default function ModelSelector({ value, onChange }: ModelSelectorProps) {
     )
 
     return (
-        <div className="model-selector">
-            <label htmlFor="model" className="field-label">
+        <div className="model-selector" role="group" aria-labelledby="model-label">
+            <label id="model-label" htmlFor="model" className="field-label">
                 AI Model
             </label>
             <select
@@ -43,6 +43,8 @@ export default function ModelSelector({ value, onChange }: ModelSelectorProps) {
                 value={value}
                 onChange={handleChange}
                 className="model-select"
+                aria-describedby="model-hint"
+                aria-required="true"
             >
                 {!value && <option value="">Select a model</option>}
                 {Object.entries(groupedModels).map(([provider, models]) => (
@@ -58,6 +60,9 @@ export default function ModelSelector({ value, onChange }: ModelSelectorProps) {
                     </optgroup>
                 ))}
             </select>
+            <p id="model-hint" className="sr-only">
+                Select the AI model to use for generating content
+            </p>
         </div>
     )
 }

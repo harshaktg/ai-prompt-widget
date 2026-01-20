@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { memo } from 'react'
 
 interface PromptEditorProps {
     value: string
@@ -6,13 +7,26 @@ interface PromptEditorProps {
     availableAttributes: string[]
 }
 
-export default function PromptEditor({
+function PromptEditor({
     value,
     onChange,
     availableAttributes,
 }: PromptEditorProps) {
+    const [localValue, setLocalValue] = useState(value)
     const [showInsertMenu, setShowInsertMenu] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    // Sync local value when prop changes (for external updates like initialization)
+    useEffect(() => {
+        setLocalValue(value)
+    }, [value])
+
+    const handleChange = (newValue: string) => {
+        // Update local state immediately (instant UI feedback)
+        setLocalValue(newValue)
+        // Call parent onChange (debounced in parent)
+        onChange(newValue)
+    }
 
     const insertVariable = (attribute: string) => {
         const textarea = textareaRef.current
@@ -21,11 +35,11 @@ export default function PromptEditor({
         const start = textarea.selectionStart
         const end = textarea.selectionEnd
         const newValue =
-            value.substring(0, start) +
+            localValue.substring(0, start) +
             `{${attribute}}` +
-            value.substring(end)
+            localValue.substring(end)
 
-        onChange(newValue)
+        handleChange(newValue)
         setShowInsertMenu(false)
 
         // Set cursor position after inserted variable
@@ -36,27 +50,41 @@ export default function PromptEditor({
         }, 0)
     }
 
-    const charCount = value.length
+    const charCount = localValue.length
+
+    const menuId = 'variable-insert-menu'
 
     return (
-        <div className="prompt-editor">
+        <fieldset className="prompt-editor" role="group" aria-labelledby="prompt-label">
             <div className="editor-header">
-                <label className="editor-label">Prompt Template</label>
+                <label id="prompt-label" htmlFor="prompt-textarea" className="editor-label">
+                    Prompt Template
+                </label>
                 <div className="editor-actions">
                     <button
                         type="button"
                         className="insert-variable-btn"
                         onClick={() => setShowInsertMenu(!showInsertMenu)}
+                        aria-expanded={showInsertMenu}
+                        aria-controls={menuId}
+                        aria-haspopup="menu"
                     >
                         Insert Variable
                     </button>
-                    <span className="char-count">{charCount} characters</span>
+                    <span className="char-count" aria-live="polite" aria-atomic="true">
+                        {charCount} characters
+                    </span>
                 </div>
             </div>
 
             {showInsertMenu && availableAttributes.length > 0 && (
-                <div className="variable-menu">
-                    <div className="variable-menu-header">
+                <div
+                    id={menuId}
+                    className="variable-menu"
+                    role="menu"
+                    aria-label="Available variables to insert"
+                >
+                    <div className="variable-menu-header" role="presentation">
                         Select an attribute to insert:
                     </div>
                     {availableAttributes.map((attr) => (
@@ -64,6 +92,7 @@ export default function PromptEditor({
                             key={attr}
                             type="button"
                             className="variable-item"
+                            role="menuitem"
                             onClick={() => insertVariable(attr)}
                         >
                             {`{${attr}}`}
@@ -73,18 +102,23 @@ export default function PromptEditor({
             )}
 
             <textarea
+                id="prompt-textarea"
                 ref={textareaRef}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
+                value={localValue}
+                onChange={(e) => handleChange(e.target.value)}
                 placeholder="Enter your AI prompt here. Use {attribute_name} to reference input attributes."
                 className="prompt-textarea"
                 rows={8}
+                aria-describedby="prompt-hint"
             />
 
-            <p className="editor-hint">
+            <p id="prompt-hint" className="editor-hint">
                 Use curly braces to reference attributes, e.g.,{' '}
                 <code>{'{name}'}</code> or <code>{'{qualifiedName}'}</code>
             </p>
-        </div>
+        </fieldset>
     )
 }
+
+// Memoize to prevent unnecessary re-renders when parent updates
+export default memo(PromptEditor)
